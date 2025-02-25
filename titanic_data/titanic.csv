@@ -1,0 +1,78 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+st.text("My first streamlit app")
+
+df = pd.read_excel('financial.xlsx') #DataFrame
+
+st.write(df) #magic
+
+"Hello"
+
+##################################################
+
+df["Country"]
+
+sales_by_country = df.groupby(["Country"])["Sales"].sum()
+
+st.write(sales_by_country)
+
+#total sales by country
+
+fig, ax = plt.subplots()
+fig.set_size_inches(10,5)
+ax.bar(sales_by_country.index, sales_by_country.values)
+st.write(fig)
+
+##################################################
+
+countries = df["Country"].unique()
+
+st.write(countries)
+
+print(countries)
+
+condition = [] #luodaan lista ehtolauseille numpy.select() funktiota varten
+
+for country in countries: #luodaan ehtolista
+    condition.append(sales_by_country.index == country)
+
+st.write(condition)
+
+latitudes = [37.09, 51.16, 23.63, 56.13, 46.6]
+longitudes = [-98.35, 10.45, -102.55, -106.35, 2.21]
+
+sales_by_country = sales_by_country.to_frame()
+
+sales_by_country["latitude"] = np.select(condition, latitudes)
+sales_by_country["longitude"] = np.select(condition, longitudes)
+
+sales_by_country["scaled_sales"] = sales_by_country["Sales"] / 100 #skaalataan Sales-sarakkeen lukuja hieman pienemmäksi
+
+st.write(sales_by_country)
+
+st.map(sales_by_country, latitude="latitude", longitude="longitude", size="scaled_sales")
+
+##################################################
+
+sel_country = st.selectbox("Valitse maa:", countries)
+
+monthly_profit = df.groupby(["Date","Country"])["Profit"].sum().reset_index()
+
+#monthly_profit
+
+mp_pivot = monthly_profit.pivot(index="Date", columns="Country", values="Profit")
+
+#mp_pivot
+
+fig, ax = plt.subplots()
+
+plt.plot(mp_pivot.index, mp_pivot[sel_country], marker="o", label=sel_country)
+plt.title("Total profit per month by countries")
+plt.xlabel("Months")
+plt.ylabel("Total profit")
+plt.legend(loc="upper center")
+
+st.pyplot(fig)
